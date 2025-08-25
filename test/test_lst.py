@@ -3,10 +3,10 @@ from typing import Callable
 from pytest import raises
 
 # Todo:
-# - ability to call the listener, and when that happens, the observers should be called
 # - ability to pass some argument or an event from the caller to the observer
 #
 # Done:
+# - ability to call the listener, and when that happens, the observers should be called
 # - ability to register a new observer
 # - if trying to register an observer that's not callable, throw exception
 # - if trying to call a listener that's not registered, throw exception
@@ -27,18 +27,30 @@ def test_register_a_new_observer():
     listener.add('registered', lambda: None)
     listener.send('registered')
 
+def test_call_observer_when_the_listener_is_sent_an_event():
+    was_called = [False]
+
+    def observer():
+        was_called[0] = True
+
+    listener = EventListener()
+    listener.add('registered', observer)
+    listener.send('registered')
+    assert was_called[0]
+
 class EventListener[Key]:
     def __init__(self):
-        self.observers: list[Key] = []
+        self.observers: dict[Key, Callable] = {}
 
     def add(self, key: Key, observer: Callable):
         if not callable(observer):
             raise NotCallable()
-        self.observers.append(key)
+        self.observers[key] = observer
 
     def send(self, key: Key):
         if key not in self.observers:
             raise NotRegistered()
+        self.observers[key]()
 
 class NotRegistered(Exception):
     pass
