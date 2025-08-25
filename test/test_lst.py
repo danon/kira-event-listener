@@ -9,12 +9,12 @@ from pytest import raises
 # - if trying to register an observer that's not callable, throw exception
 # - if trying to call a listener that's not registered, throw exception
 
-def test_if_trying_to_call_observer_that_is_not_registered__throw_exception():
+def test_fail_when_called_not_registered_observer():
     listener = EventListener()
     with raises(NotRegistered):
         listener.send('not registered', None)
 
-def test_if_trying_to_register_an_observer_that_is_not_callable__throw_exception():
+def test_fail_when_registering_non_callable_observer():
     listener = EventListener()
     not_callable = 0  # anything that is not a callable
     with raises(NotCallable):
@@ -36,7 +36,7 @@ def test_call_observer_when_the_listener_is_sent_an_event():
     listener.send('registered', None)
     assert was_called[0]
 
-def test_ability_to_pass_some_argument_or_an_event_from_the_caller_to_the_observer():
+def test_pass_event_from_caller_to_the_observer():
     called_argument = [None]
 
     def observer(argument):
