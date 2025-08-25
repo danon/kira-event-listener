@@ -2,11 +2,9 @@ from typing import Callable
 
 from pytest import raises
 
-# Todo:
-# - ability to pass some argument or an event from the caller to the observer
-#
 # Done:
 # - ability to call the listener, and when that happens, the observers should be called
+# - ability to pass some argument or an event from the caller to the observer
 # - ability to register a new observer
 # - if trying to register an observer that's not callable, throw exception
 # - if trying to call a listener that's not registered, throw exception
@@ -14,7 +12,7 @@ from pytest import raises
 def test_if_trying_to_call_observer_that_is_not_registered__throw_exception():
     listener = EventListener()
     with raises(NotRegistered):
-        listener.send('not registered')
+        listener.send('not registered', None)
 
 def test_if_trying_to_register_an_observer_that_is_not_callable__throw_exception():
     listener = EventListener()
@@ -24,19 +22,30 @@ def test_if_trying_to_register_an_observer_that_is_not_callable__throw_exception
 
 def test_register_a_new_observer():
     listener = EventListener()
-    listener.add('registered', lambda: None)
-    listener.send('registered')
+    listener.add('registered', lambda event: None)
+    listener.send('registered', None)
 
 def test_call_observer_when_the_listener_is_sent_an_event():
     was_called = [False]
 
-    def observer():
+    def observer(event):
         was_called[0] = True
 
     listener = EventListener()
     listener.add('registered', observer)
-    listener.send('registered')
+    listener.send('registered', None)
     assert was_called[0]
+
+def test_ability_to_pass_some_argument_or_an_event_from_the_caller_to_the_observer():
+    called_argument = [None]
+
+    def observer(argument):
+        called_argument[0] = argument
+
+    listener = EventListener()
+    listener.add('registered', observer)
+    listener.send('registered', 'my argument')
+    assert called_argument[0] == 'my argument'
 
 class EventListener[Key]:
     def __init__(self):
@@ -47,10 +56,10 @@ class EventListener[Key]:
             raise NotCallable()
         self.observers[key] = observer
 
-    def send(self, key: Key):
+    def send(self, key: Key, argument):
         if key not in self.observers:
             raise NotRegistered()
-        self.observers[key]()
+        self.observers[key](argument)
 
 class NotRegistered(Exception):
     pass
